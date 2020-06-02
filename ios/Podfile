@@ -9,10 +9,10 @@ end
 
 target 'Plugin' do
   capacitor_pods
-
-  pod 'Firebase/MLVision'
 end
 
 target 'PluginTests' do
   capacitor_pods
 end
+
+pod 'Firebase/MLVision'

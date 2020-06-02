@@ -38,16 +38,16 @@ public class FirebaseMLVision: CAPPlugin {
             if let performanceMode = optionsObject["performanceMode"] {
                 options.performanceMode = performanceMode as! VisionFaceDetectorPerformanceMode
             }
-            
+
             if let minFaceSize = optionsObject["minFaceSize"] {
                 options.minFaceSize = minFaceSize as! CGFloat
             }
-            
+
             if let enableTracking = optionsObject["enableTracking"] {
                 options.isTrackingEnabled = enableTracking as! Bool
             }
         }
-        
+
         let faceDetector = vision.faceDetector(options: options)
 
         let faces: [VisionFace]
@@ -57,7 +57,7 @@ public class FirebaseMLVision: CAPPlugin {
             call.error(error.localizedDescription, error)
             return
         }
-        
+
         var facesArray = [Any]()
 
         for face in faces {
@@ -65,24 +65,25 @@ public class FirebaseMLVision: CAPPlugin {
 
             do { // Bounds
                 let bounds = face.frame
-                
+
                 var boundsObject = [String: Any]()
-    
-                boundsObject["left"] = bounds.origin.x
+
                 boundsObject["x"] = bounds.origin.x
-                boundsObject["top"] = bounds.origin.y
                 boundsObject["y"] = bounds.origin.y
-                boundsObject["right"] = bounds.width
-                boundsObject["bottom"] = bounds.height
-                boundsObject["width"] = bounds.width
-                boundsObject["height"] = bounds.height
-                
+                boundsObject["width"] = bounds.size.width
+                boundsObject["height"] = bounds.size.height
+
+                boundsObject["left"] = bounds.origin.x
+                boundsObject["top"] = bounds.origin.y
+                boundsObject["right"] = bounds.origin.x + bounds.size.width
+                boundsObject["bottom"] = bounds.origin.y + bounds.size.height
+
                 faceObject["bounds"] = boundsObject
             }
-            
+
             do { // Landmarks
                 var landmarksArray = [Any]()
-            
+
                 let landmarkTypes: [FaceLandmarkType] = [
                     // The midpoint between the subject's left mouth corner and the outer corner of the subject's left eye.
                     .leftCheek,
@@ -93,12 +94,12 @@ public class FirebaseMLVision: CAPPlugin {
                     .leftEar,
                     // The midpoint of the subject's right ear tip and right ear lobe.
                     .rightEar,
-                    
+
                     // The center of the subject's left eye cavity.
                     .leftEye,
                     // The midpoint of the subject's right ear tip and right ear lobe.
                     .rightEye,
-                    
+
                     // The midpoint between the subject's nostrils where the nose meets the face.
                     .noseBase,
 
@@ -109,7 +110,7 @@ public class FirebaseMLVision: CAPPlugin {
                     // The subject's right mouth corner where the lips meet.
                     .mouthRight,
                 ]
-                
+
                 for landmarkType in landmarkTypes {
                     if let landmark = landmarkHelper(face: face, landmarkType: landmarkType) {
                         landmarksArray.append(landmark)
@@ -120,10 +121,10 @@ public class FirebaseMLVision: CAPPlugin {
                     faceObject["landmarks"] = landmarksArray
                 }
             }
-            
+
             do { // Contours
                 var contoursArray = [Any]()
-            
+
                 let contourTypes: [FaceContourType] = [
                     // All points of a face contour.
                     .all,
@@ -159,7 +160,7 @@ public class FirebaseMLVision: CAPPlugin {
                     // The outline of the subject's nose bridge.
                     .noseBottom,
                 ]
-                
+
                 for contourType in contourTypes {
                     if let contour = contourHelper(face: face, contourType: contourType) {
                         contoursArray.append(contour)
@@ -170,7 +171,7 @@ public class FirebaseMLVision: CAPPlugin {
                     faceObject["contours"] = contoursArray
                 }
             }
-            
+
             if face.hasHeadEulerAngleY {
                 // Returns the rotation of the face about the vertical axis of the image.
                 faceObject["headEulerAngleY"] = face.headEulerAngleY
@@ -197,57 +198,57 @@ public class FirebaseMLVision: CAPPlugin {
                 // Returns the tracking ID if the tracking is enabled.
                 faceObject["trackingId"] = face.trackingID
             }
-            
+
             facesArray.append(faceObject)
         }
-        
+
         call.success([
             "faces": facesArray
         ])
     }
-    
+
     private func landmarkHelper(
         face: VisionFace,
         landmarkType: FaceLandmarkType
     ) -> [String: Any]? {
         if let landmark: VisionFaceLandmark = face.landmark(ofType: landmarkType) {
             let point: VisionPoint = landmark.position
-                
+
             var landmarkObject = [String: Any]()
-            
+
             landmarkObject["type"] = landmark.type
             landmarkObject["position"] = pointHelper(point: point)
-            
+
             return landmarkObject
         } else {
             return nil
         }
     }
-    
+
     private func contourHelper(
         face: VisionFace,
         contourType: FaceContourType
     ) -> [String: Any]? {
         if let contour: VisionFaceContour = face.contour(ofType: contourType) {
             let points: [VisionPoint] = contour.points
-                
+
             var pointsArray = [Any]()
 
             for point in points {
                 pointsArray.append(pointHelper(point: point))
             }
-            
+
             var contourObject = [String: Any]()
-            
+
             contourObject["type"] = contour.type
             contourObject["points"] = pointsArray
-            
+
             return contourObject
         } else {
             return nil
         }
     }
-    
+
     private func pointHelper(
         point: VisionPoint
     ) -> [String: Any] {
@@ -256,7 +257,7 @@ public class FirebaseMLVision: CAPPlugin {
         pointObject["x"] = point.x
         pointObject["y"] = point.y
         pointObject["z"] = point.z
-        
+
         return pointObject
     }
 }

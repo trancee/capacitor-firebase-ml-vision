@@ -210,19 +210,18 @@ public class FirebaseMLVision extends Plugin {
                                         JSObject boundsObject = new JSObject();
 
                                         // The X coordinate of the left side of the rectangle
-                                        boundsObject.put("left", bounds.left);
                                         boundsObject.put("x", bounds.left);
                                         // The Y coordinate of the top of the rectangle
-                                        boundsObject.put("top", bounds.top);
                                         boundsObject.put("y", bounds.top);
-                                        // The X coordinate of the right side of the rectangle
-                                        boundsObject.put("right", bounds.right);
-                                        // The Y coordinate of the bottom of the rectangle
-                                        boundsObject.put("bottom", bounds.bottom);
                                         // The rectangle's width.
                                         boundsObject.put("width", bounds.width());
                                         // The rectangle's height.
                                         boundsObject.put("height", bounds.height());
+
+                                        boundsObject.put("left", bounds.left);
+                                        boundsObject.put("top", bounds.top);
+                                        boundsObject.put("right", bounds.right);
+                                        boundsObject.put("bottom", bounds.bottom);
 
                                         faceObject.put("bounds", boundsObject);
                                     }

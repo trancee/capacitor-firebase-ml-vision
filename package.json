@@ -26,7 +26,7 @@
     "dist/",
     "ios/",
     "android/",
-    "CapacitorFirebaseMlVision.podspec"
+    "CapacitorFirebaseVision.podspec"
   ],
   "keywords": [
     "capacitor",
