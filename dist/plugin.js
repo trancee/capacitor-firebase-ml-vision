@@ -1,4 +1,4 @@
-var firebaseMLVisionExports = (function (exports) {
+var firebaseVisionExports = (function (exports) {
     'use strict';
 
     // Extended option for controlling additional accuracy / speed trade-offs in performing face detection.
