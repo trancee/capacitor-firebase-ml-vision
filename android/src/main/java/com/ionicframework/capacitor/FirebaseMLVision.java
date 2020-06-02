@@ -1,11 +1,8 @@
 package com.ionicframework.capacitor;
 
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.util.Base64;
-import android.util.Log;
-import android.widget.Toast;
 
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -13,6 +10,7 @@ import com.getcapacitor.NativePlugin;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
+
 import com.google.firebase.ml.vision.FirebaseVision;
 import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 import com.google.firebase.ml.vision.common.FirebaseVisionPoint;
@@ -21,7 +19,10 @@ import com.google.firebase.ml.vision.face.FirebaseVisionFaceContour;
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetector;
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions;
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceLandmark;
+import com.google.firebase.ml.vision.face.FirebaseVisionFaceContour.ContourType;
+import com.google.firebase.ml.vision.face.FirebaseVisionFaceLandmark.LandmarkType;
 
+import java.util.Arrays;
 import java.util.List;
 
 @NativePlugin(
@@ -49,13 +50,15 @@ public class FirebaseMLVision extends Plugin {
     };
 
     private interface LandmarkHelper {
-        void get(FirebaseVisionFace face, String type, int landmarkType, JSArray landmarksArray);
+        JSObject get(FirebaseVisionFace face, @LandmarkType int landmarkType);
     }
 
-    LandmarkHelper landmarkHelper = (face, type, landmarkType, landmarksArray) -> {
+    LandmarkHelper landmarkHelper = (face, landmarkType) -> {
         // Represent a face landmark. A landmark is a point on a detected face, such as an eye, nose, or mouth.
         // https://firebase.google.com/docs/reference/android/com/google/firebase/ml/vision/face/FirebaseVisionFaceLandmark
         FirebaseVisionFaceLandmark landmark = face.getLandmark(landmarkType);
+
+        JSObject landmarkObject = new JSObject();
 
         if (landmark != null) {
             // Represent a 2D or 3D point for FirebaseVision.
@@ -64,25 +67,25 @@ public class FirebaseMLVision extends Plugin {
 
             JSObject pointObject = pointHelper.get(point);
 
-            JSObject landmarkObject = new JSObject();
-
             // Gets the FirebaseVisionFaceLandmark.LandmarkType type.
             landmarkObject.put("type", landmark.getLandmarkType());
             // Gets a 2D point for landmark position, where (0, 0) is the upper-left corner of the image.
             landmarkObject.put("position", pointObject);
-
-            landmarksArray.put(landmarkObject);
         }
+
+        return landmarkObject;
     };
 
     private interface ContourHelper {
-        void get(FirebaseVisionFace face, String type, int contourType, JSArray contoursArray);
+        JSObject get(FirebaseVisionFace face, @ContourType int contourType);
     }
 
-    ContourHelper contourHelper = (face, type, contourType, contoursArray) -> {
+    ContourHelper contourHelper = (face, contourType) -> {
         // Represent a face contour. A contour is a list of points on a detected face, such as the mouth.
         // https://firebase.google.com/docs/reference/android/com/google/firebase/ml/vision/face/FirebaseVisionFaceContour
         FirebaseVisionFaceContour contour = face.getContour(contourType);
+
+        JSObject contourObject = new JSObject();
 
         if (contour != null) {
             // Represent a 2D or 3D point for FirebaseVision.
@@ -98,16 +101,14 @@ public class FirebaseMLVision extends Plugin {
                     pointsArray.put(pointObject);
                 }
 
-                JSObject contourObject = new JSObject();
-
                 // Gets the FirebaseVisionFaceContour.ContourType type.
                 contourObject.put("type", contour.getFaceContourType());
                 // Gets a list of 2D points for this face contour, where (0, 0) is the upper-left corner of the image.
                 contourObject.put("points", pointsArray);
-
-                contoursArray.put(contourObject);
             }
         }
+
+        return contourObject;
     };
 
     @PluginMethod()
@@ -202,10 +203,10 @@ public class FirebaseMLVision extends Plugin {
                                 for (FirebaseVisionFace face : faces) {
                                     JSObject faceObject = new JSObject();
 
-                                    // Returns the axis-aligned bounding rectangle of the detected face.
-                                    Rect bounds = face.getBoundingBox();
-
                                     {
+                                        // Returns the axis-aligned bounding rectangle of the detected face.
+                                        Rect bounds = face.getBoundingBox();
+
                                         JSObject boundsObject = new JSObject();
 
                                         // The X coordinate of the left side of the rectangle
@@ -229,26 +230,40 @@ public class FirebaseMLVision extends Plugin {
                                     {
                                         JSArray landmarksArray = new JSArray();
 
-                                        // The midpoint between the subject's left mouth corner and the outer corner of the subject's left eye.
-                                        landmarkHelper.get(face, "cheek", FirebaseVisionFaceLandmark.LEFT_CHEEK, landmarksArray);
-                                        // The midpoint between the subject's right mouth corner and the outer corner of the subject's right eye.
-                                        landmarkHelper.get(face, "cheek", FirebaseVisionFaceLandmark.RIGHT_CHEEK, landmarksArray);
-                                        // The midpoint of the subject's left ear tip and left ear lobe.
-                                        landmarkHelper.get(face, "ear", FirebaseVisionFaceLandmark.LEFT_EAR, landmarksArray);
-                                        // The midpoint of the subject's right ear tip and right ear lobe.
-                                        landmarkHelper.get(face, "ear", FirebaseVisionFaceLandmark.RIGHT_EAR, landmarksArray);
-                                        // The center of the subject's left eye cavity.
-                                        landmarkHelper.get(face, "eye", FirebaseVisionFaceLandmark.LEFT_EYE, landmarksArray);
-                                        // The midpoint of the subject's right ear tip and right ear lobe.
-                                        landmarkHelper.get(face, "eye", FirebaseVisionFaceLandmark.RIGHT_EYE, landmarksArray);
-                                        // The midpoint between the subject's nostrils where the nose meets the face.
-                                        landmarkHelper.get(face, "nose", FirebaseVisionFaceLandmark.NOSE_BASE, landmarksArray);
-                                        // The center of the subject's bottom lip.
-                                        landmarkHelper.get(face, "mouth", FirebaseVisionFaceLandmark.MOUTH_BOTTOM, landmarksArray);
-                                        // The subject's left mouth corner where the lips meet.
-                                        landmarkHelper.get(face, "mouth", FirebaseVisionFaceLandmark.MOUTH_LEFT, landmarksArray);
-                                        // The subject's right mouth corner where the lips meet.
-                                        landmarkHelper.get(face, "mouth", FirebaseVisionFaceLandmark.MOUTH_RIGHT, landmarksArray);
+                                        List<Integer> landmarkTypes = Arrays.asList(
+                                                // The midpoint between the subject's left mouth corner and the outer corner of the subject's left eye.
+                                                FirebaseVisionFaceLandmark.LEFT_CHEEK,
+                                                // The midpoint between the subject's right mouth corner and the outer corner of the subject's right eye.
+                                                FirebaseVisionFaceLandmark.RIGHT_CHEEK,
+
+                                                // The midpoint of the subject's left ear tip and left ear lobe.
+                                                FirebaseVisionFaceLandmark.LEFT_EAR,
+                                                // The midpoint of the subject's right ear tip and right ear lobe.
+                                                FirebaseVisionFaceLandmark.RIGHT_EAR,
+
+                                                // The center of the subject's left eye cavity.
+                                                FirebaseVisionFaceLandmark.LEFT_EYE,
+                                                // The midpoint of the subject's right ear tip and right ear lobe.
+                                                FirebaseVisionFaceLandmark.RIGHT_EYE,
+
+                                                // The midpoint between the subject's nostrils where the nose meets the face.
+                                                FirebaseVisionFaceLandmark.NOSE_BASE,
+
+                                                // The center of the subject's bottom lip.
+                                                FirebaseVisionFaceLandmark.MOUTH_BOTTOM,
+                                                // The subject's left mouth corner where the lips meet.
+                                                FirebaseVisionFaceLandmark.MOUTH_LEFT,
+                                                // The subject's right mouth corner where the lips meet.
+                                                FirebaseVisionFaceLandmark.MOUTH_RIGHT
+                                        );
+
+                                        for (@LandmarkType int landmarkType : landmarkTypes) {
+                                            JSObject landmarkObject = landmarkHelper.get(face, landmarkType);
+
+                                            if (landmarkObject.length() > 0) {
+                                                landmarksArray.put(landmarkObject);
+                                            }
+                                        }
 
                                         if (landmarksArray.length() > 0) {
                                             faceObject.put("landmarks", landmarksArray);
@@ -258,34 +273,49 @@ public class FirebaseMLVision extends Plugin {
                                     {
                                         JSArray contoursArray = new JSArray();
 
-                                        // All points of a face contour.
-                                        contourHelper.get(face, "all", FirebaseVisionFaceContour.ALL_POINTS, contoursArray);
-                                        // The outline of the subject's face.
-                                        contourHelper.get(face, "face", FirebaseVisionFaceContour.FACE, contoursArray);
-                                        // The top outline of the subject's left eyebrow.
-                                        contourHelper.get(face, "eyebrow", FirebaseVisionFaceContour.LEFT_EYEBROW_TOP, contoursArray);
-                                        // The bottom outline of the subject's left eyebrow.
-                                        contourHelper.get(face, "eyebrow", FirebaseVisionFaceContour.LEFT_EYEBROW_BOTTOM, contoursArray);
-                                        // The top outline of the subject's right eyebrow.
-                                        contourHelper.get(face, "eyebrow", FirebaseVisionFaceContour.RIGHT_EYEBROW_TOP, contoursArray);
-                                        // The bottom outline of the subject's right eyebrow.
-                                        contourHelper.get(face, "eyebrow", FirebaseVisionFaceContour.RIGHT_EYEBROW_BOTTOM, contoursArray);
-                                        // The outline of the subject's left eye cavity.
-                                        contourHelper.get(face, "eye", FirebaseVisionFaceContour.LEFT_EYE, contoursArray);
-                                        // The outline of the subject's right eye cavity.
-                                        contourHelper.get(face, "eye", FirebaseVisionFaceContour.RIGHT_EYE, contoursArray);
-                                        // The top outline of the subject's upper lip.
-                                        contourHelper.get(face, "lip", FirebaseVisionFaceContour.UPPER_LIP_TOP, contoursArray);
-                                        // The bottom outline of the subject's upper lip.
-                                        contourHelper.get(face, "lip", FirebaseVisionFaceContour.UPPER_LIP_BOTTOM, contoursArray);
-                                        // The top outline of the subject's lower lip.
-                                        contourHelper.get(face, "lip", FirebaseVisionFaceContour.LOWER_LIP_TOP, contoursArray);
-                                        // The bottom outline of the subject's lower lip.
-                                        contourHelper.get(face, "lip", FirebaseVisionFaceContour.LOWER_LIP_BOTTOM, contoursArray);
-                                        // The outline of the subject's nose bridge.
-                                        contourHelper.get(face, "nose", FirebaseVisionFaceContour.NOSE_BRIDGE, contoursArray);
-                                        // The outline of the subject's nose bridge.
-                                        contourHelper.get(face, "nose", FirebaseVisionFaceContour.NOSE_BOTTOM, contoursArray);
+                                        List<Integer> contourTypes = Arrays.asList(
+                                                // All points of a face contour.
+                                                FirebaseVisionFaceContour.ALL_POINTS,
+
+                                                // The outline of the subject's face.
+                                                FirebaseVisionFaceContour.FACE,
+
+                                                // The top outline of the subject's left eyebrow.
+                                                FirebaseVisionFaceContour.LEFT_EYEBROW_TOP,
+                                                // The bottom outline of the subject's left eyebrow.
+                                                FirebaseVisionFaceContour.LEFT_EYEBROW_BOTTOM,
+                                                // The top outline of the subject's right eyebrow.
+                                                FirebaseVisionFaceContour.RIGHT_EYEBROW_TOP,
+                                                // The bottom outline of the subject's right eyebrow.
+                                                FirebaseVisionFaceContour.RIGHT_EYEBROW_BOTTOM,
+
+                                                // The outline of the subject's left eye cavity.
+                                                FirebaseVisionFaceContour.LEFT_EYE,
+                                                // The outline of the subject's right eye cavity.
+                                                FirebaseVisionFaceContour.RIGHT_EYE,
+
+                                                // The top outline of the subject's upper lip.
+                                                FirebaseVisionFaceContour.UPPER_LIP_TOP,
+                                                // The bottom outline of the subject's upper lip.
+                                                FirebaseVisionFaceContour.UPPER_LIP_BOTTOM,
+                                                // The top outline of the subject's lower lip.
+                                                FirebaseVisionFaceContour.LOWER_LIP_TOP,
+                                                // The bottom outline of the subject's lower lip.
+                                                FirebaseVisionFaceContour.LOWER_LIP_BOTTOM,
+
+                                                // The outline of the subject's nose bridge.
+                                                FirebaseVisionFaceContour.NOSE_BRIDGE,
+                                                // The outline of the subject's nose bridge.
+                                                FirebaseVisionFaceContour.NOSE_BOTTOM
+                                        );
+
+                                        for (@ContourType int contourType : contourTypes) {
+                                            JSObject contourObject = contourHelper.get(face, contourType);
+
+                                            if (contourObject.length() > 0) {
+                                                contoursArray.put(contourObject);
+                                            }
+                                        }
 
                                         if (contoursArray.length() > 0) {
                                             faceObject.put("contours", contoursArray);
