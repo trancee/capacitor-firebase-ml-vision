@@ -1,7 +1,7 @@
 
   Pod::Spec.new do |s|
     s.name = 'CapacitorFirebaseMlVision'
-    s.version = '1.1.4'
+    s.version = '1.1.5'
     s.summary = 'Use machine learning in your apps to solve real-world problems.'
     s.license = 'MIT'
     s.homepage = 'https://github.com/trancee/capacitor-firebase-ml-vision.git'

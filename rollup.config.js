@@ -5,7 +5,7 @@ export default {
   output: {
     file: 'dist/plugin.js',
     format: 'iife',
-    name: 'firebaseVisionExports',
+    name: 'firebaseMLVisionExports',
     sourcemap: true
   },
   plugins: [
