@@ -27,16 +27,16 @@ public class FirebaseMLVision: CAPPlugin {
 
         if let optionsObject = call.getObject("options") {
             if let landmarkMode = optionsObject["landmarkMode"] {
-                options.landmarkMode = landmarkMode as! VisionFaceDetectorLandmarkMode
+                options.landmarkMode = VisionFaceDetectorLandmarkMode(rawValue: landmarkMode as! UInt)!
             }
             if let contourMode = optionsObject["contourMode"] {
-                options.contourMode = contourMode as! VisionFaceDetectorContourMode
+                options.contourMode = VisionFaceDetectorContourMode(rawValue: contourMode as! UInt)!
             }
             if let classificationMode = optionsObject["classificationMode"] {
-                options.classificationMode = classificationMode as! VisionFaceDetectorClassificationMode
+                options.classificationMode = VisionFaceDetectorClassificationMode(rawValue: classificationMode as! UInt)!
             }
             if let performanceMode = optionsObject["performanceMode"] {
-                options.performanceMode = performanceMode as! VisionFaceDetectorPerformanceMode
+                options.performanceMode = VisionFaceDetectorPerformanceMode(rawValue: performanceMode as! UInt)!
             }
 
             if let minFaceSize = optionsObject["minFaceSize"] {
